@@ -1,0 +1,512 @@
+<?php
+include 'header.php';
+
+?>
+<script type='text/javascript'>
+
+function sendtoDB(select_id, myargs){
+//	alert(myargs.level_amount_int);
+	$.post("submit.php", myargs,
+		  function(response){
+			if(response.indexOf('error') > -1){
+				alert(response);
+			}else{
+				var newopt = $(response);
+				$('#' + select_id + ' option:last').before(newopt);
+				newopt.attr('selected', true);	
+				$('#level_id').removeAttr('disabled');
+				$('#program_id').removeAttr('disabled');			
+			}
+	}, "text");
+
+}
+
+
+
+function deleteGift(gid){
+	$.post("submit.php", {table: 'gift_relationships', action:'delete_gift', gift_id: gid},
+		  function(response){
+			if(response.indexOf('error') > -1){
+				alert(response);
+			}else{
+				$("#gift_" + gid).remove();			
+			}
+	}, "text");
+}
+
+function saveFeaturedProp(rowID, val){
+	var sendval = val ? 1 : 0;
+	var myargs = {action:'update','table':'gift_relationships', column: 'featured', ID: rowID, value: sendval};
+	$.post("submit.php", myargs,
+		  function(response){
+			if(response.indexOf('error') > -1){
+				alert(response);
+			}else{
+				var yesorno = val ? 'Yes' : 'No';
+				$("#"+rowID + "_featured").find('span').text(yesorno);
+				$("#"+rowID + "_featured").find('span').show();
+				$("#"+rowID + "_featured").find('input').hide();
+			}
+	}, "text");
+}
+
+function makeEditable(elementID, col_name, data){
+	var rowID = elementID.substring(0,elementID.indexOf('_'));
+	$('#'+ elementID).removeClass('editable');
+	$('#'+ elementID).addClass('editing');
+	var select = $('<select class="edit_' + col_name + '"></select>');
+	if(col_name == 'program_id'){
+	    select.append("<option value=''>None</option>");
+	}
+	for(var i=0; i< data.length; ++i){
+	    var newopt = $('<option></option>');
+	    jQuery.each(data[i], function(key, val) {
+		if( (key=='ID') | (key=='level_id')){
+			newopt.val(val);
+
+		}else{
+			newopt.text(val);
+			if(val==$("input[name='"+elementID+"']").val()){
+				newopt.attr('selected', 'selected');
+				//alert('found selected for ' + val);
+			}
+		}
+	    });
+	    select.append(newopt);
+	}
+	$('#'+ elementID).html(select);
+
+
+
+
+	var saveButton = $("<input type='button' value='Save' style='font-size: 12px' />");
+	var cancelButton = $("<input type='button' value='Cancel' style='font-size: 8px;' />");
+
+	saveButton.bind('click', function(){
+		if($(select).val()){
+			var myargs = {action:'update','table':'gift_relationships', column: col_name, ID: rowID, value: $(select).val()};
+			alert(select.find("option[selected]").text());
+			$.post("submit.php", myargs,
+				  function(response){
+					if(response.indexOf('error') > -1){
+						alert(response);
+					}else{
+						$("input[name='"+elementID+"']").val(select.find("option[selected]").text());
+						$('#'+ elementID).text(select.find("option[selected]").text());
+						$('#'+ elementID).addClass('editable');
+						$('#'+ elementID).removeClass('editing');
+					}
+			}, "text");
+		}
+
+	});
+
+	cancelButton.bind('click', function(){
+		$('#'+ elementID).text($("input[name='"+elementID+"']").val());
+		$('#'+ elementID).addClass('editable');
+		var t=setTimeout("$('#" + elementID + "').removeClass('editing');",500)
+	});
+
+	$('#'+ elementID).append(saveButton);
+	$('#'+ elementID).append(cancelButton);
+
+
+}
+
+  $(document).ready(function(){
+	$(".editable").bind('click', function (e) {
+		if($(this).hasClass('editing'))return;
+		var elementID = $(this).attr('id');
+		var ID = elementID.substring(0,elementID.indexOf('_'));
+		var col_name = elementID.substring(elementID.indexOf('_')+1);
+
+		if(col_name =='station_id'){
+			$.post("query.php", {table: 'stations'},
+				function(data){
+					if(data.length > 0){
+						makeEditable(elementID, col_name, data);
+					}
+				}, "json");
+
+		}else{
+			$.post("query.php", {table: 'gift_relationships', gift_id : ID, column: col_name},
+				  function(data){
+					makeEditable(elementID, col_name, data);
+			}, "json");
+		}
+	});
+/*
+
+	$.post("query.php", myargs,{ table: "levels", station_id_int: $(this).val() },
+	  function(data){
+		var item;
+		for(var i=0; i< data.length; ++i){
+		    //alert(data[i].level_amount);
+		    var newopt = $('<option>'+data[i].level_amount+'</option>');
+		    newopt.val(data[i].level_id);
+		    //var newIndex = $('#station_id').children().length - 1;
+		
+		    $('#level_id option:last').before(newopt);
+		}
+	  }, "json");
+
+*/
+	$('#station_id').change(function () {
+		if($(this).val() =='other'){
+			$(this).next().show('slow').next().show();
+		}else{
+			$(this).next().val('');
+			$(this).next().hide('slow').next().hide();
+		}
+		if($(this).val() && ($(this).val() !='other')){
+			$('#level_id').removeAttr('disabled');
+			$('#program_id').removeAttr('disabled');
+		
+			if($('#level_id').children().length > 2){
+				while($('#level_id').children().length > 2){
+
+					$('#level_id option:eq(1)').remove();
+				}
+			}
+			$.post("query.php", { table: "levels", station_id_int: $(this).val() },
+			  function(data){
+				var item;
+				for(var i=0; i< data.length; ++i){
+				    //alert(data[i].level_amount);
+				    var newopt = $('<option>'+data[i].level_amount+'</option>');
+				    newopt.val(data[i].level_id);
+				    //var newIndex = $('#station_id').children().length - 1;
+				
+				    $('#level_id option:last').before(newopt);
+				}
+			  }, "json");
+
+
+			if($('#program_id').children().length > 2){
+				while($('#program_id').children().length > 2){
+					$('#program_id option:eq(1)').remove();
+				}
+			}
+
+			$.post("query.php", { table: "programs", station_id_int: $(this).val() },
+			  function(data){
+				var item;
+				for(var i=0; i< data.length; ++i){
+				    //alert(data[i].level_amount);
+				    var newopt = $('<option>'+data[i].program_name+'</option>');
+				    newopt.val(data[i].ID);
+				    //var newIndex = $('#station_id').children().length - 1;
+				
+				    $('#program_id option:last').before(newopt);
+				}
+			  }, "json");
+
+			
+		}else{
+			$('#level_id').attr('disabled','disabled');
+			$('#program_id').attr('disabled','disabled');
+		}
+	
+	});
+
+  });
+
+
+</script>
+
+<?php
+
+if($_POST['newgift']){
+	//print_r($_POST);
+	//die();
+	if((($gift_name = $_POST['gift_name']) || nonempty($_POST['gift_id']))&& nonempty($_POST['station_id']) && nonempty($_POST['level_id']) ){	
+
+		$gift_description = $_POST['gift_description'];
+
+		$station_name = $_POST['station_name'];
+		$level_amount = $_POST['level_amount'];
+		$program_name = $_POST['program_name'];
+		$gift_id = nonempty($_POST['gift_id']) ? $_POST['gift_id'] : '';
+		$station_id = nonempty($_POST['station_id']) ? $_POST['station_id'] : '';
+		$program_id = nonempty($_POST['program_id']) ? $_POST['program_id'] : '';
+		$level_id = nonempty($_POST['level_id']) ? $_POST['level_id'] : '';
+
+		$featured = $_POST['featured'] ? $_POST['featured'] : 0;
+
+		if(!$gift_id){
+			$upload_url = upload_back();
+			if($upload_url === false){
+				error('Error uploading file');die();
+			}
+			$query = "INSERT INTO gifts (gift_name, gift_description, thumb) VALUES (\"" . ($gift_name) . "\", \"".$gift_description."\", \"$upload_url\");";
+			if(mysql_query($query)!==false){
+				$gift_id = mysql_insert_id();
+			}else{ error($query);die();}
+		}
+		if(!$station_id){
+			$station_id = doquery("SELECT ID FROM stations WHERE station_name like \"$station_name\";");
+			$station_id = $station_id[0]->ID;
+			if(!$station_id){
+				$query = "INSERT INTO stations (station_name) VALUES (\"" . ($station_name) . "\");";
+				if(mysql_query($query)!==false){
+					$station_id = mysql_insert_id();
+				}else{ error($query);die();}
+			}
+		}
+		if(!$level_id){
+			$level_id = doquery("SELECT level_id FROM levels WHERE level_amount = $level_amount;");
+			$level_id = $level_id[0]->level_id;
+			if(!$level_id){
+				$query = "INSERT INTO levels (level_name, level_amount, program_id ) VALUES ('', $level_amount, $program_id);";
+				if(mysql_query($query)!==false){
+					$level_id = mysql_insert_id();
+				}else{ error($query);die();}
+			}
+		}
+		/*
+		if($program_name){
+			$program_id = doquery("SELECT ID FROM programs WHERE program_name LIKE \"$program_name\";");
+			$program_id = $program_id[0]->ID;
+			if(!$program_id){
+				$query = "INSERT INTO programs (program_name, station_id) VALUES (\"" . addslashes($program_name) . "\",  $station_id);";
+				if(mysql_query($query)!==false){
+					$program_id = mysql_insert_id();
+				}else{ error($query);die();}
+			}
+		}
+		*/
+		if(!$program_id){
+			$program_id = 0;
+		}
+
+		$query = "INSERT INTO gift_relationships (gift_id, station_id, level_id, program_id, featured) VALUES ($gift_id, $station_id, $level_id, $program_id, $featured);";
+		if(mysql_query($query)!==false){
+			echo "<div class='message'>Gift added.</div>";
+		}else error($query);
+
+	}else{
+		error("Please fill out all fields.");
+		//print_r($_POST);
+	}
+}
+?>
+
+
+
+
+<h2>Manage Gifts</h2>
+
+<form method='post' action='' enctype="multipart/form-data" onsubmit="if($('#level_id').attr('disabled') || $('#program_id').attr('disabled')){return false;}else{return true;}"/>
+<table>
+  <tr>
+<th>ID</th>
+<th><a href='?order=gift_name'> Gift Name </a></th>
+<th>Gift Description</th>
+<th> Thumbnail </th>
+<th> Gift Level </th>
+<th><a href='?order=program_name'> Station/Program </a></th>
+<th><a href='?order=level_amount'> Give Level </a></th>
+<th>Featured</th>
+
+</tr>
+
+<tr>
+<?php 
+
+
+$query="SELECT * FROM gifts;";
+$gifts = doquery($query);
+
+
+?>
+ <td colspan='2'>
+	<select id='gift_id' name='gift_id' style='display:block' onchange="if($(this).val()=='other'){$(this).next().show('slow').next().show();$('#thumb').show('slow');$('#gift_description').show('slow');}else{$(this).next().val('');$(this).next().hide('slow').next().hide();$('#thumb').hide('slow');$('#gift_description').hide('slow');}">
+	<option value=''>Choose a gift</option>
+
+  <?php 
+	foreach($gifts as $gift){
+		echo "<option value='$gift->ID'> $gift->gift_name </option>\n";
+	}
+  ?>
+	<option value='other'>New</option>
+	</select>
+	<input style='display:none' type='text' name='gift_name' />
+<!--<input type='button' value='cancel' style='display: none' onclick="$(this).prev().val('');$(this).prev().hide('slow');$(this).hide();$('#thumb_box').hide('slow');"/>-->
+
+
+</td>
+<td> <textarea id='gift_description' style='display:none' type='text' name='gift_description' /></textarea>
+
+</td>
+
+</td>
+<td> <input style='display:none' type='file' id='thumb' name='thumb' />
+<input type="hidden" name="attachement_loos" name="attachement_loos" value="<?php echo $globals['attachement'];?>"></input>
+</td>
+
+  <td>
+
+	<select id='min_level_id' disabled='disabled' name='min_level_id' style='display:block' onchange="if($(this).val()=='other'){$(this).next().show().next().show();}else{$(this).next().val('');$(this).next().hide().next().hide();}">
+	<option value=''>Choose a gift level</option>
+
+	<option value='other'>Other</option>
+	</select>
+	<input name='min_level_amount' type='text'  style='display: none'/><input type='button' value='Save' style='display: none' onclick="sendtoDB('min_level_id',{'action':'insert','table':'levels', 'level_amount_int': $(this).prev().val(), 'level_name_char' : ''});$(this).prev().val('');$(this).prev().hide('slow');$(this).hide();"/>
+
+  </td>
+
+<?php
+
+
+$query="SELECT * FROM programs ORDER BY parent_id ASC, program_name;";
+
+$programs = doquery($query);
+
+?>
+  <td>
+	<select id='program_id' name='program_id' style='display:block' >
+	<option value=''>Choose a station</option>
+
+  <?php 
+	foreach($programs as $program){
+		echo "<option value='$program->ID'> $program->station_name </option>\n";
+	}
+  ?>
+	<option value='other'>New</option>
+	</select>
+	<input type='text' name='program_name' style='display: none'/><input type='button' value='Save' style='display: none' onclick="sendtoDB('program_id',{'action':'insert','table':'programs','station_name_char': $(this).prev().val(), 'parent_id':0});$(this).prev().val('');$(this).prev().hide('slow');$(this).hide();"/>
+
+<!--
+<input type='button' value='cancel' style='display: none' onclick="$(this).prev().val('');$(this).prev().hide('slow');$(this).hide();"/>
+
+
+<input type='button'  value='save' style='display: none' onclick="var opt = $('<option>'+$(this).prev().val()+'</option>'); opt.attr('selected', 'selected'); opt.val($(this).prev().val()); $('select#station_name').append(opt);$(this).prev().hide();$(this).hide();"/>-->
+  </td>
+  <td>
+<?php
+$query="SELECT * FROM levels;";
+$levels = doquery($query);
+?>
+	<select id='level_id' disabled='disabled' name='level_id' style='display:block' onchange="if($(this).val()=='other'){$(this).next().show().next().show();}else{$(this).next().val('');$(this).next().hide().next().hide();}">
+	<option value=''>Choose a level</option>
+
+  <?php 
+/*
+	foreach($levels as $level){
+		echo "<option value='$level->level_id'> $level->level_amount </option>\n";
+	}
+*/
+  ?>
+	<option value='other'>Other</option>
+	</select>
+	<input name='level_amount' type='text'  style='display: none'/><input type='button' value='Save' style='display: none' onclick="sendtoDB('level_id',{'action':'insert','table':'levels', 'level_amount_int': $(this).prev().val(), 'level_name_char' : '', 'station_id_int':$('#station_id').val()});$(this).prev().val('');$(this).prev().hide('slow');$(this).hide();"/>
+
+  </td>
+
+  <td>
+	<input type='checkbox' name='featured' id='featured' value='1' /> Yes <br />
+  </td>
+
+
+  <td>
+<?php
+$query="SELECT * FROM programs;";
+$programs = doquery($query);
+
+?>
+	<select id='program_id' disabled='disabled'  name='program_id' style='display:block' onchange="if($(this).val()=='other'){$(this).next().show().next().show();}else{$(this).next().val('');$(this).next().hide().next().hide();}">
+	<option value=''>Choose a program</option>
+
+  <?php 
+	foreach($programs as $program){
+		echo "<option value='$program->ID'> $program->program_name</option>\n";
+	}
+  ?>
+	<option value='other'>New</option>
+	</select>
+	<input type='text' name='program_name'  style='display: none'/><input type='button' value='Save' style='display: none' onclick="sendtoDB('program_id',{'action':'insert','table':'programs', 'program_name_char': $(this).prev().val(), 'station_id_int':$('#station_id').val()});$(this).prev().val('');$(this).prev().hide('slow');$(this).hide();"/>
+
+  </td>
+  </tr>
+  <tr>
+  <td colspan='5' style='text-align: right'>
+     <input type='submit' name='newgift' value='Add new' />
+     </form>
+  </td>
+  </tr>
+
+<?php 
+	$order = $_GET['order'] ? $_GET['order'] : 'gift_name';
+	$query="SELECT gr.ID, g.ID as gift_id, g.gift_name, g.gift_description, g.thumb, l.level_name, l.level_amount, p.program_name, s.station_name, gr.station_id, gr.level_id, gr.program_id, gr.featured FROM gift_relationships as gr LEFT JOIN stations as s ON (gr.station_id = s.ID)
+		LEFT JOIN gifts as g ON (gr.gift_id = g.ID)
+		LEFT JOIN levels as l ON (gr.level_id = l.level_id)
+		LEFT JOIN programs as p ON (gr.program_id = p.ID)
+		ORDER BY $order;";
+	//$query = "SELECT * FROM programs;";
+	$gifts = doquery($query);
+	$count = 1;
+	foreach($gifts as $gift){
+		echo "<tr id='gift_$gift->ID' >\n";
+		echo "<td>$gift->ID";
+		echo "<input type='hidden' name='".$gift->ID."_station_id' value='$gift->station_name'/>";
+		echo "<input type='hidden' name='".$gift->ID."_level_id' value='$gift->level_amount'/>";
+		echo "<input type='hidden' name='".$gift->ID."_program_id' value='$gift->program_name'/>";
+		echo "</td>\n";
+		echo "<td><div>$gift->gift_name</div>
+			<input type='button' style='font-size: 12px;' value='Delete' onclick=\"if(confirm('Are you sure you want to delete gift &quot;".htmlentities($gift->gift_name, ENT_QUOTES)."&quot;?')){deleteGift($gift->ID)};\"/>
+			<a href='gifts.php?ID=$gift->gift_id' style='font-size: 12px;' >Edit</a>
+		 </td>\n";
+		echo "<td>$gift->gift_description</td>\n";
+		echo "<td><img src='$gift->thumb' /></td>\n";
+		echo "<td class='editable' id='".$gift->ID."_station_id' > $gift->station_name</td>\n";
+		echo "<td class='editable' id='".$gift->ID."_level_id'>$gift->level_amount</td>\n";
+		echo "<td  class='underline' id='".$gift->ID."_featured' >\n";
+		echo "<span onclick=\"$(this).parent().find('input').show();$(this).parent().find('span').hide();\" style='display: block;'>";
+		echo $gift->featured ? 'Yes' : 'No';
+		echo "</span>";
+		$checked = $gift->featured ? 'checked' : '';
+		echo "<input type='checkbox' name='edit_featured' $checked style='display:none' /> <input type='button' onclick=\"saveFeaturedProp($gift->ID, $(this).prev().is(':checked'))\" value='Save' style='font-size: 12px;display:none' /><input onclick=\"$(this).parent().find('input').hide();$(this).parent().find('span').show()\" type='button' value='Cancel' style='display:none;font-size:8px;' />";
+		echo "</td>\n";
+		echo "<td class='editable' id='".$gift->ID."_program_id' >";
+		echo $gift->program_name ? $gift->program_name : '&nbsp;';
+		echo "</td>\n";
+		echo "</tr>\n";
+		++$count;
+	}
+?>
+
+
+  </td>
+</table>
+
+
+<?php
+/*
+$query="SHOW TABLES;";
+
+$results = doquery($query);
+echo "<h2>Edit Tables:</h2>\n";
+echo "<ul>\n";
+foreach($results as $key => $row){
+	$table = $row->Tables_in_supportform;
+	$t = cleanname($table);
+	echo "  <li><a href='$table.php'>$t</a></li>\n";
+}
+echo "</ul>\n";
+*/
+// Use result
+// Attempting to print $result won't allow access to information in the resource
+// One of the mysql result functions must be used
+// See also mysql_result(), mysql_fetch_array(), mysql_fetch_row(), etc.
+
+
+// Free the resources associated with the result set
+// This is done automatically at the end of the script
+//mysql_free_result($result);
+?>
+
+
+<?php
+include 'footer.php';
+
+?>

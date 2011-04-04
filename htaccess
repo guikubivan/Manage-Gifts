@@ -1,0 +1,8 @@
+#Specify .htpasswd file and copy/rename to .htaccess
+AuthUserFile /path/to/.htpasswd
+AuthName "Support Form Administration"
+AuthType Basic
+
+<Limit GET>
+require valid-user
+</Limit>

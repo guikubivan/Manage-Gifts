@@ -1,0 +1,75 @@
+body {
+	font-family: sans-serif;
+}
+
+table td {
+	padding: 5px;
+	font-size: 12px;
+}
+
+td.id {
+	width: 20px;
+}
+
+table th {
+	font-size: 13px;
+}
+
+td.name {
+	width: 100px;
+}
+
+td.description {
+	width: 300px;
+}
+
+.error {
+	background-color: #FFC7C7;
+
+}
+
+#gift_description {
+	width: 250px;
+}
+
+div.editable, td.editable, td.underline span{
+	background-color: #FFF889;
+}
+
+
+td.underline span {
+	padding: 10px 0;	
+}
+
+td.underline span:hover{
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+div.editable:hover, td.editable:hover {
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+td.editing select{
+	display: block;
+}
+
+td.editing input{
+	display: block;
+	margin-bottom: 10px;
+}
+
+#nav {
+	margin-bottom: 50px;
+}
+
+#nav a {
+	padding: 15px;
+	border: 1px solid grey;
+	margin: 4px;
+}
+
+select#gift_id {
+	width: 300px;
+}
