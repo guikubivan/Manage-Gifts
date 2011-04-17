@@ -1,6 +1,4 @@
 <?php
-
-dfsad
 function doquery($query){
 	// Perform Query
 	$result = mysql_query($query);

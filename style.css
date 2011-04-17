@@ -23,6 +23,11 @@ td.description {
 	width: 300px;
 }
 
+.message {
+	background-color: #a9feac;
+
+}
+
 .error {
 	background-color: #FFC7C7;
 

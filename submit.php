@@ -15,7 +15,7 @@ if($_POST['action'] == 'update'){
 		$current_id = doquery("SELECT station_id FROM gift_relationships WHERE ID=$ID;");
 		$current_id = $station_id[0]->station_id;
 	}
-	$value = preg_match("/_name/", $column) ? '"' . $value. '"' : $value;
+	$value = preg_match("/(_name|greeting)$/", $column) ? '"' . $value. '"' : $value;
 	
 	$query = "UPDATE $table SET $column = $value WHERE ID = $ID;";
 	if(mysql_query($query)!==false){
@@ -41,6 +41,7 @@ if($_POST['action'] == 'update'){
 			$safevals[] = $val;
 		}
 	}
+        if($table =='programs')$safevals[] = "NULL";//empty description
 
 	$query = "INSERT INTO $table VALUES (NULL, " . implode(', ', $safevals) . ");";
 

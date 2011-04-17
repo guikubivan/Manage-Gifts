@@ -32,7 +32,7 @@ if($_POST['updatebutton']){
 	if(mysql_query($query)===false){
 			echo "<div>error: $query</div>";
 	}
-	echo "<div>Levels updated.</div>";
+	echo "<div class='message'>Levels updated.</div>";
   }else{
     echo "<div>Error: not all fields were filled out.</div>\n";
   }

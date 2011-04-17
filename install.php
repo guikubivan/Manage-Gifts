@@ -5,35 +5,66 @@ include 'functions.php';
 
 ?>
 <form action='' method='post'>
-Install?<br/>
-<input type='submit' name='install' value='Yes'/>
-
-<br /><br />
-Delete?
-<input type='submit' name='delete' value='Yes'/>
+  <table>
+    <tr>
+      <td>
+        Install?
+      </td>
+      <td>
+        <input type='submit' name='install' value='Yes'/>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Upgrade?<br/>(add "greeting" column to "programs" table)
+      </td>
+      <td>
+        <input type='submit' name='upgrade' value='Yes'/>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Delete all tables?
+      </td>
+      <td>
+        <input type='submit' name='delete' value='Yes'/>
+      </td>
+    </tr>
+  </table>
 </form>
 
 
 <?php
 
-if(!$_POST['install'] && !$_POST['delete'])die();
+if(empty($_POST['install']) && empty($_POST['delete']) && empty($_POST['upgrade']))die();
+?>
+<hr/>
+<?
+if(!empty($_POST['delete'])) {
+  $query = "SHOW TABLES;";
+  $results = doquery($query);
+  if(sizeof($results)==0)die("<h2>No tables to delete.</h2>");
+  echo "<h2>Deleting tables:</h2>\n";
+  echo "<ul>\n";
+  foreach ($results as $key => $row) {
+    $table = current($row);
 
-if($_POST['delete']){
-	$query="SHOW TABLES;";
-	$results = doquery($query);
-	echo "<h2>Deleting tables:</h2>\n";
-	echo "<ul>\n";
-	foreach($results as $key => $row){
-		$table = $row->Tables_in_supportform;
-		
-		$t = cleanname($table);
-		echo "  <li>$t</li>\n";
-		$query = "DROP TABLE $table;";
-		mysql_query($query);
-	}
-	echo "</ul>\n";
-	die();
+    $t = cleanname($table);
+    echo "  <li>$t...\n";
+    $query = "DROP TABLE $table;";
+    echo (mysql_query($query)==false) ? "ERROR." : "done.";
+    echo "</li>";
+  }
+  echo "</ul>\n";
+  die();
+}
 
+if(!empty($_POST['upgrade'])){
+  echo "<p>Upgrading \"programs\" table...";
+  $query = "ALTER TABLE programs ADD COLUMN greeting TEXT AFTER parent_id;";
+  echo (mysql_query($query)==false) ? "ERROR." : "done.";
+  echo "</p>";
+  die();
 }
 
 echo "<h2>Installing:</h2>\n";
@@ -45,7 +76,11 @@ $query="CREATE TABLE stations (
 	KEY station_name (station_name)
 );";
 if(!mysql_query($query)) echo "Error when creating table\n";
-*/
+*/?>
+
+<ul>
+
+<?
 $query="CREATE TABLE programs (
 	ID int(5) NOT NULL auto_increment,
 	program_name varchar(255) NOT NULL default '',
@@ -54,8 +89,14 @@ $query="CREATE TABLE programs (
 	KEY program_name (program_name),
 	KEY parent_id (parent_id)
 );";
-if(!mysql_query($query)) echo "Error when creating table\n";
+?>
 
+  <li>Creating "programs" table...
+    <? echo (mysql_query($query)==false) ? "ERROR." : "done.";?>
+  </li>
+
+  
+<?
 $query="CREATE TABLE levels (
 	ID int(5) NOT NULL auto_increment,
 	level_amount int(10) NOT NULL default 0,
@@ -64,8 +105,13 @@ $query="CREATE TABLE levels (
 	KEY level_amount (level_amount),
 	KEY level_name (level_name)
 );";
-if(!mysql_query($query)) echo "Error when creating table\n";
+?>
+  <li>Creating "levels" table...
+    <? echo (mysql_query($query)==false) ? "ERROR." : "done.";?>
+  </li>
 
+
+<?
 $query="CREATE TABLE level_relationships (
 	ID int(9) NOT NULL auto_increment,
 	program_id int(5) NOT NULL default 0,
@@ -73,8 +119,13 @@ $query="CREATE TABLE level_relationships (
 	PRIMARY KEY (program_id, level_id),
 	KEY ID(ID)
 );";
-if(!mysql_query($query)) echo "Error when creating table\n";
+?>
+  <li>Creating "level_relationships" table...
+    <? echo (mysql_query($query)==false) ? "ERROR." : "done.";?>
+  </li>
 
+
+<?
 $query="CREATE TABLE gifts (
 	ID int(9) NOT NULL auto_increment,
 	gift_name VARCHAR(255) NOT NULL default '',
@@ -84,9 +135,14 @@ $query="CREATE TABLE gifts (
 	PRIMARY KEY (ID),
 	KEY gift_name (gift_name)
 );";
-if(!mysql_query($query)) echo "Error when creating table\n";
+?>
+  <li>Creating "gifts" table...
+    <? echo (mysql_query($query)==false) ? "ERROR." : "done.";?>
+  </li>
 
 
+  
+<?
 $query="CREATE TABLE gift_relationships (
 	ID int(9) NOT NULL auto_increment,
 	gift_id int(9) NOT NULL default 0,
@@ -95,8 +151,12 @@ $query="CREATE TABLE gift_relationships (
 	PRIMARY KEY (gift_id, program_id),
 	KEY ID(ID)
 );";
-if(!mysql_query($query)) echo "Error when creating table\n";
-
+?>
+  <li>Creating "gift_relationships" table...
+    <? echo (mysql_query($query)==false) ? "ERROR." : "done.";?>
+  </li>
+</ul>
+<?
 include 'closedb.php';
 ?>
 

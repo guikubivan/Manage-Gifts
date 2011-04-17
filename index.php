@@ -197,7 +197,7 @@ function makeEditable(elementID, col_name, data){
 if($_POST['newgift']){
 	//print_r($_POST);
 	//die();
-	if((($gift_name = $_POST['gift_name']) || nonempty($_POST['gift_id']))&& nonempty($_POST['program_id']) && nonempty($_POST['min_level_id']) ){	
+	if( ( ($gift_name = $_POST['gift_name']) || nonempty($_POST['gift_id']) ) && nonempty($_POST['program_id']) && nonempty($_POST['min_level_id']) ){
 
 		$gift_description = $_POST['gift_description'];
 
@@ -214,7 +214,7 @@ if($_POST['newgift']){
 		if(!$gift_id){
 			$upload_url = upload_back();
 			if($upload_url === false){
-				error('Error uploading file');die();
+				error('Error uploading file');
 			}
 			$upload_url = str_replace("../", '', $upload_url);
 			$query = "INSERT INTO gifts (gift_name, gift_description, thumb, min_level_id) VALUES (\"" . ($gift_name) . "\", \"".$gift_description."\", \"$upload_url\", $min_level_id);";

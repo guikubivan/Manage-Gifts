@@ -32,7 +32,7 @@ if($_POST['updatebutton']){
 
 	$query = "UPDATE $table SET gift_name = \"".$_POST['gift_name']."\", gift_description = \"".$_POST['gift_description']."\", thumb = \"".$_POST['thumb']."\", min_level_id = $min_level_id WHERE ID = ". $_POST['ID'];
 	if(mysql_query($query)!==false){
-		echo "<div>Gift updated</div>";
+		echo "<div class='message'>Gift updated</div>";
 	}else{echo "<div>error: $query (" . implode(',',$_POST).")</div>";}
 
   }else{

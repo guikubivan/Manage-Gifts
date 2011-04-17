@@ -76,21 +76,21 @@ function makeEditable(elementID, col_name, data){
 	$(".editable").bind('click', function (e) {
 		if($(this).hasClass('editing'))return;
 		var elementID = $(this).attr('id');
-		var ID = elementID.substring(0,elementID.indexOf('_'));
+		var rowID = elementID.substring(0,elementID.indexOf('_'));
 		var col_name = elementID.substring(elementID.indexOf('_')+1);
 
-		if(col_name =='parent_id'){
+                switch(col_name){
+                  case "parent_id":
 			$.post("query.php", {table: 'programs', parent_id_int: 0},
 				function(data){
 					if(data.length > 0){
 						makeEditable(elementID, col_name, data);
 					}
 				}, "json");
-
-		}else{
+                    break;
+                  case "program_name":
 			$('#'+ elementID).removeClass('editable');
 			$('#'+ elementID).addClass('editing');
-			var rowID = elementID.substring(0,elementID.indexOf('_'));
 			$(this).text('');
 			var nameField = $("<input type='text' style='font-size: 12px' />");
 			nameField.val($("input[name='"+elementID+"']").val());
@@ -125,7 +125,47 @@ function makeEditable(elementID, col_name, data){
 			$(this).append(saveButton);
 			$(this).append(cancelButton);
 			
-		}
+                    break;
+                  case "program_greeting":
+			$('#'+ elementID).removeClass('editable');
+			$('#'+ elementID).addClass('editing');
+			$(this).text('');
+			var nameField = $("<textarea style='font-size: 12px; height:50px; width:300px;' ></textarea");
+			nameField.val($("input[name='"+elementID+"']").val());
+			var saveButton = $("<input type='button' value='Update' style='font-size: 12px' />");
+			var cancelButton = $("<input type='button' value='Cancel' style='font-size: 8px;' />");
+
+			saveButton.bind('click', function(){
+				if($(nameField).val()){
+					var myargs = {action:'update','table':'programs', column: "greeting", ID: rowID, value: $(nameField).val()};
+					$.post("submit.php", myargs,
+						  function(response){
+							if(response.indexOf('error') > -1){
+								alert(response);
+							}else{
+								$("input[name='"+elementID+"']").val($(nameField).val());
+								$('#'+ elementID).text($(nameField).val());
+								$('#'+ elementID).addClass('editable');
+								$('#'+ elementID).removeClass('editing');
+							}
+					}, "text");
+				}
+
+			});
+
+			cancelButton.bind('click', function(){
+				$('#'+ elementID).text($("input[name='"+elementID+"']").val());
+				$('#'+ elementID).addClass('editable');
+				var t=setTimeout("$('#" + elementID + "').removeClass('editing');",500)
+			});
+
+			$(this).append(nameField);
+			$(this).append(saveButton);
+			$(this).append(cancelButton);
+			
+                    break;
+                }
+
 	});
 
 
@@ -179,10 +219,9 @@ if($_POST['newprogram']){
 	if( ($program_name = $_POST['program_name']) ){	
 
 		$parent_id = $_POST['parent_id'] ? $_POST['parent_id'] : 0;
+                $greeting = $_POST['program_greeting'] ? mysql_real_escape_string($_POST['program_greeting']) : "NULL";
 
-
-
-		$query = "INSERT INTO programs VALUES (NULL, \"$program_name\", $parent_id);";
+		$query = "INSERT INTO programs VALUES (NULL, \"$program_name\", $parent_id, '$greeting');";
 		if(mysql_query($query)!==false){
 			echo "<div class='message'>Program added.</div>";
 		}else error($query);
@@ -204,13 +243,17 @@ if($_POST['newprogram']){
   <tr>
 <th>ID</th>
 <th><a href='?order=program_name'> Program Name </a></th>
+<th>Program Greeting</th>
 <th>Parent </th>
 </tr>
 
 <tr >
   <td>&nbsp;</td>
   <td style='text-align: center;'>
-	<input type='text' name='program_name' id='program_name' '/>
+	<input type='text' name='program_name' id='program_name'/>
+  </td>
+  <td>
+	<textarea style="height:50px;width:300px;" name='program_greeting' id='program_greeting'></textarea>
   </td>
   <td style='text-align: center;'>
 	<select id='parent_id'   name='parent_id' style='display:block' >
@@ -254,6 +297,7 @@ if($_POST['newprogram']){
 		echo "<td>$program->ID";
 		echo "<input type='hidden' name='".$program->ID."_parent_id' value='".$pnames[$program->parent_id]."'/>";
 		echo "<input type='hidden' name='".$program->ID."_program_name' value=\"".htmlentities($program->program_name, ENT_QUOTES)."\"/>";
+                echo "<input type='hidden' name='".$program->ID."_program_greeting' value=\"".htmlentities($program->greeting, ENT_QUOTES)."\"/>";
 
 		echo "</td>\n";
 		echo "<td>
@@ -261,6 +305,9 @@ if($_POST['newprogram']){
 			
 			<input type='button' style='font-size: 10px;border:none;' value='Delete' onclick=\"if(confirm('Are you sure you want to delete program &quot;".htmlentities($program->program_name, ENT_QUOTES)."&quot;?')){deleteItem('programs', $program->ID)};\"/>
 		 </td>\n";
+                echo "<td>\n";
+                echo "<div class='editable' id='" . $program->ID . "_program_greeting'>$program->greeting </div>";
+                echo "</td>\n";
 		$class = $program->parent_id == 0 ? '' : 'class="editable"';
 		echo "<td $class id='".$program->ID."_parent_id'>";
 		echo $program->parent_id ? $pnames[$program->parent_id] : '&nbsp;';
