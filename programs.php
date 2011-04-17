@@ -154,9 +154,10 @@ function makeEditable(elementID, col_name, data){
 			});
 
 			cancelButton.bind('click', function(){
-				$('#'+ elementID).text($("input[name='"+elementID+"']").val());
-				$('#'+ elementID).addClass('editable');
-				var t=setTimeout("$('#" + elementID + "').removeClass('editing');",500)
+                          var value = $("input[name='"+elementID+"']").val();
+                          $('#'+ elementID).text(value ? value : "N/A");
+                          $('#'+ elementID).addClass('editable');
+                          var t=setTimeout("$('#" + elementID + "').removeClass('editing');",500)
 			});
 
 			$(this).append(nameField);
@@ -219,9 +220,9 @@ if($_POST['newprogram']){
 	if( ($program_name = $_POST['program_name']) ){	
 
 		$parent_id = $_POST['parent_id'] ? $_POST['parent_id'] : 0;
-                $greeting = $_POST['program_greeting'] ? mysql_real_escape_string($_POST['program_greeting']) : "NULL";
+                $greeting = $_POST['program_greeting'] ? "'".mysql_real_escape_string($_POST['program_greeting'])."'" : "NULL";
 
-		$query = "INSERT INTO programs VALUES (NULL, \"$program_name\", $parent_id, '$greeting');";
+		$query = "INSERT INTO programs VALUES (NULL, \"$program_name\", $parent_id, $greeting);";
 		if(mysql_query($query)!==false){
 			echo "<div class='message'>Program added.</div>";
 		}else error($query);
@@ -306,7 +307,7 @@ if($_POST['newprogram']){
 			<input type='button' style='font-size: 10px;border:none;' value='Delete' onclick=\"if(confirm('Are you sure you want to delete program &quot;".htmlentities($program->program_name, ENT_QUOTES)."&quot;?')){deleteItem('programs', $program->ID)};\"/>
 		 </td>\n";
                 echo "<td>\n";
-                echo "<div class='editable' id='" . $program->ID . "_program_greeting'>$program->greeting </div>";
+                echo "<div class='editable' id='" . $program->ID . "_program_greeting'>".($program->greeting ? $program->greeting : "N/A")."</div>";
                 echo "</td>\n";
 		$class = $program->parent_id == 0 ? '' : 'class="editable"';
 		echo "<td $class id='".$program->ID."_parent_id'>";
