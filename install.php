@@ -36,6 +36,11 @@ include 'functions.php';
 
 <?php
 
+function upgrade_database(){
+  $query = "ALTER TABLE programs ADD COLUMN greeting TEXT AFTER parent_id;";
+  echo (mysql_query($query)==false) ? "ERROR." : "done.";
+}
+
 if(empty($_POST['install']) && empty($_POST['delete']) && empty($_POST['upgrade']))die();
 ?>
 <hr/>
@@ -61,8 +66,7 @@ if(!empty($_POST['delete'])) {
 
 if(!empty($_POST['upgrade'])){
   echo "<p>Upgrading \"programs\" table...";
-  $query = "ALTER TABLE programs ADD COLUMN greeting TEXT AFTER parent_id;";
-  echo (mysql_query($query)==false) ? "ERROR." : "done.";
+  upgrade_database();
   echo "</p>";
   die();
 }
@@ -92,7 +96,9 @@ $query="CREATE TABLE programs (
 ?>
 
   <li>Creating "programs" table...
-    <? echo (mysql_query($query)==false) ? "ERROR." : "done.";?>
+    <? echo (mysql_query($query)==false) ? "ERROR." : "done.";
+       upgrade_database();
+    ?>
   </li>
 
   

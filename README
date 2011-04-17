@@ -1,0 +1,5 @@
+TO USE:
+1. Create config.php file (see sample config-sample.php)
+2. Create thumbs directory above app folder.
+3. (Optional) Create .htaccess to limit public access (see sample htaccess file)
+4. Direct browser to install.php and install/upgrade. Upgrade only if you have the related tables already. You can delete all tables if you want to start over.
