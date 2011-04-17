@@ -3,3 +3,6 @@ TO USE:
 2. Create thumbs directory above app folder.
 3. (Optional) Create .htaccess to limit public access (see sample htaccess file)
 4. Direct browser to install.php and install/upgrade. Upgrade only if you have the related tables already. You can delete all tables if you want to start over.
+
+USAGE NOTES:
+You can only add greetings to programs through the programs page (programs.php).
